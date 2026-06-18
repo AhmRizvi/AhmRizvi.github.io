@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commission Calculator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 2em;
+        }
+        
+        .info-section {
+            background: #f8f9ff;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 2px solid #667eea;
+        }
+        
+        .info-section h2 {
+            color: #764ba2;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 8px;
+        }
+        
+        .form-group input {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .form-group input[readonly] {
+            background: #f0f0f0;
+            color: #666;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+		
+		/* Increase width for Date Range column */
+        th:nth-child(1), td:nth-child(1) {
+            width: 200px;
+        }
+        
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        td input {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        td input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        tr:nth-child(even) {
+            background: #f8f9ff;
+        }
+        
+        .calculated {
+            font-weight: 700;
+            color: #667eea;
+            background: #e8eaff !important;
+            padding: 12px;
+        }
+        
+        .btn-container {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 35px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .btn-calculate {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Commission Calculator</h1>
+        
+        <div class="info-section">
+            <h2>Basic Information</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="issueDate">Issue Date:</label>
+                    <input type="text" id="issueDate" value="1/1/2025">
+                </div>
+                <div class="form-group">
+                    <label for="expiryDate">Expiry Date:</label>
+                    <input type="text" id="expiryDate" value="9/9/2025">
+                </div>
+                <div class="form-group">
+                    <label for="tenure">Tenure (days):</label>
+                    <input type="number" id="tenure" value="251" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="amount">Amount:</label>
+                    <input type="number" id="amount" value="50000">
+                </div>
+                <div class="form-group">
+                    <label for="exchangeRate">Exchange Rate:</label>
+                    <input type="number" id="exchangeRate" value="110">
+                </div>
+                <div class="form-group">
+                    <label for="laibilityAmount">Laibility Amount:</label>
+                    <input type="number" id="laibilityAmount" value="5500000" readonly>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-section">
+            <h2>Rate Calculation Table</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date Range</th>
+                        <th>Days</th>
+                        <th>Rate</th>
+                        <th>Amount Calculation</th>
+                        <th>Days Count</th>
+                        <th>Adjusted Calculation</th>
+                    </tr>
+                </thead>
+                <tbody id="calculationTable">
+                    <!-- Rows will be generated dynamically -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="btn-container">
+            <button class="btn-calculate" onclick="calculateAll()">
+                🔄 Calculate All
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Helper function to format date as MM/DD/YYYY
+        function formatDate(date) {
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const year = date.getFullYear();
+            return `${month}/${day}/${year}`;
+        }
+
+        // Helper function to add days to a date
+        function addDays(date, days) {
+            const result = new Date(date);
+            result.setDate(result.getDate() + days);
+            return result;
+        }
+
+        // Calculate Tenure automatically from Issue and Expiry dates
+        function calculateTenure() {
+            const issueDateStr = document.getElementById('issueDate').value;
+            const expiryDateStr = document.getElementById('expiryDate').value;
+            
+            // Parse dates assuming MM/DD/YYYY format
+            const issueDate = new Date(issueDateStr);
+            const expiryDate = new Date(expiryDateStr);
+            
+            if (!isNaN(issueDate.getTime()) && !isNaN(expiryDate.getTime())) {
+                const diffTime = expiryDate.getTime() - issueDate.getTime();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Include the expiry day
+                document.getElementById('tenure').value = diffDays > 0 ? diffDays : 0;
+            } else {
+                document.getElementById('tenure').value = 0;
+            }
+        }
+
+        // Calculate Laibility Amount automatically
+        function updateLaibilityAmount() {
+            const amount = parseFloat(document.getElementById('amount').value) || 0;
+            const exchangeRate = parseFloat(document.getElementById('exchangeRate').value) || 0;
+            const laibilityAmount = amount * exchangeRate;
+            document.getElementById('laibilityAmount').value = laibilityAmount;
+            return laibilityAmount;
+        }
+
+        // Calculate all rows in the table
+        function calculateAll() {
+            calculateTenure(); // Ensure tenure is updated
+            const laibilityAmount = updateLaibilityAmount();
+            const tenure = parseInt(document.getElementById('tenure').value) || 0;
+            const issueDateStr = document.getElementById('issueDate').value;
+            const issueDate = new Date(issueDateStr);
+            
+            // Update date ranges and days based on tenure
+            updateDateRanges(tenure, issueDate);
+            
+            const rows = document.querySelectorAll('#calculationTable tr');
+            
+            rows.forEach(row => {
+                const rate = parseFloat(row.querySelector('.rate').value) || 0;
+                const days = parseFloat(row.querySelector('.days').value) || 0;
+                const daysCount = parseFloat(row.querySelector('.daysCount').value) || 90;
+                const amountCalc = laibilityAmount * (rate / 100);
+                let result;
+                if (daysCount === 90) {
+                    result = amountCalc;
+                } else if (daysCount === 1) {
+                    result = amountCalc / 90 * days;
+                } else {
+                    // For other Days Count, use the original formula as fallback
+                    result = ((laibilityAmount * rate) / daysCount) * days;
+                }
+                row.querySelector('.amountCalc').textContent = amountCalc.toLocaleString();
+                row.querySelector('.result').textContent = result.toLocaleString();
+            });
+        }
+
+        // Update date ranges based on tenure and issue date
+        function updateDateRanges(tenure, issueDate) {
+            const tableBody = document.getElementById('calculationTable');
+            const segment = 90; // Fixed 90-day segments
+            const numberOfRows = Math.ceil(tenure / segment);
+            
+            // Preserve current rates and daysCount
+            const currentRates = [];
+            const currentDaysCounts = [];
+            document.querySelectorAll('#calculationTable .rate').forEach(input => {
+                currentRates.push(parseFloat(input.value) || 0);
+            });
+            document.querySelectorAll('#calculationTable .daysCount').forEach(input => {
+                currentDaysCounts.push(parseFloat(input.value) || 90);
+            });
+            
+            // Default rates for first 3 rows
+            const defaultRates = [0.4, 0.3, 0.2];
+            
+            // Clear existing rows
+            tableBody.innerHTML = '';
+            
+            // Create rows dynamically
+            for (let i = 0; i < numberOfRows; i++) {
+                const startDay = i * segment;
+                const endDay = Math.min((i + 1) * segment, tenure);
+                const days = endDay - startDay;
+                const startDate = addDays(issueDate, startDay);
+                const endDate = addDays(issueDate, endDay - 1); // End date is inclusive
+                const dateRange = `${formatDate(startDate)} - ${formatDate(endDate)}`;
+                const rate = currentRates[i] !== undefined ? currentRates[i] : (defaultRates[i] || 0.1);
+                const daysCount = currentDaysCounts[i] !== undefined ? currentDaysCounts[i] : 90;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><input type="text" class="dateRange" value="${dateRange}" readonly></td>
+                    <td><input type="number" class="days" value="${days}" readonly></td>
+                    <td><input type="number" step="0.0001" min="0" class="rate" value="${rate}"></td>
+                    <td class="calculated amountCalc">0</td>
+                    <td><input type="number" class="daysCount" value="${daysCount}"></td>
+                    <td class="calculated result">0</td>
+                `;
+                
+                tableBody.appendChild(row);
+                
+                // Add event listener to rate and daysCount inputs
+                row.querySelector('.rate').addEventListener('change', calculateAll);
+                row.querySelector('.daysCount').addEventListener('change', calculateAll);
+            }
+        }
+
+        // Auto-calculate on input change
+        document.getElementById('issueDate').addEventListener('input', calculateAll);
+        document.getElementById('expiryDate').addEventListener('input', calculateAll);
+        document.getElementById('amount').addEventListener('input', calculateAll);
+        document.getElementById('exchangeRate').addEventListener('input', calculateAll);
+
+        // Initial calculation
+        calculateAll();
+    </script>
+</body>
+</html>
